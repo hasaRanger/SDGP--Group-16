@@ -37,8 +37,9 @@ const UserProfile = () => {
   ];
 
   return (
-    <div className="relative bg-black text-white p-8">
+    <div className="relative bg-black text-white min-h-screen flex flex-col">
       <Header variant='landing'/>
+      <div className='mt-20 sm:mt-24 p-8 flex-1'>
       
       {/* Profile Header */}
       <div className="profile-wrapper">
@@ -171,6 +172,7 @@ const UserProfile = () => {
             <Button variant='outline' size='lg' className='text-red-600 border border-red-600 hover:text-red-500 hover:border-red-500'>Delete Account</Button>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

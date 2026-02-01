@@ -113,7 +113,7 @@ const GameProfile = () => {
 
             <Header />
             {/* Main Content*/}
-            <div className="max-w-3xl w-full space-y-10 mt-17">
+            <div className="max-w-3xl w-full space-y-10 mt-20 sm:mt-24">
                 {/* Title*/}
                 <div className="text-center space-y-3">
                     <h1 className="text-4xl md:text-5xl font-bold text-white">

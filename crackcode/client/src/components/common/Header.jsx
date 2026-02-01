@@ -7,12 +7,12 @@ import Avatar from './Avatar';
 
 const Header = ({ variant = "default" }) => {
     // Base styles with fixed positioning
-    const baseStyles = "w-full flex justify-between items-center fixed top-0 left-0 z-50";
+    const baseStyles = "w-full flex justify-between items-center fixed top-0 left-0 z-50 h-20 sm:h-24";
     
     // Variant styles
     const variants = {
-        landing: "h-20 sm:h-24 bg-transparent text-white px-6 sm:px-10",
-        default: "h-20 sm:h-20 bg-transparent backdrop-blur-md shadow-md px-6 sm:px-10 border-b border-white/10",
+        landing: "bg-transparent text-white px-6 sm:px-10",
+        default: "bg-transparent backdrop-blur-md shadow-md px-6 sm:px-10 border-b border-white/10",
     };
 
     const navigate = useNavigate();

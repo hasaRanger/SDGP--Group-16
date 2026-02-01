@@ -6,11 +6,13 @@ import Footer from '../../components/common/Footer'
 function Landing() {
 
   return (
-    <>
+    <div className='min-h-screen flex flex-col bg-[#050505]'>
       <Header variant="landing" />
-      <Title />
+      <div className='mt-20 sm:mt-24 flex-1'>
+        <Title />
+      </div>
       <Footer variant='landing'/>
-    </>
+    </div>
   )
 }
 
