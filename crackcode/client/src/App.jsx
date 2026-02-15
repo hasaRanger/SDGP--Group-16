@@ -36,12 +36,14 @@ import Landing from './pages/landing/Landing'
 import EmailVerify from './pages/userauth/EmailVerify'
 import Login from './pages/userauth/Login'
 import ResetPassword from './pages/userauth/ResetPassword'
+import CareermapMain from './pages/careermap/CareermapMain' 
 import GameProfile from './pages/gameprofile/gameprofile'
 import UserProfile from './pages/userprofile/userprofile'
 import CodeEditorPage from './pages/codeEditor/CodeEditorPage'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import LearnMainPage from './pages/learn/LearnMainPage'
 
 function App() {
   return (
@@ -54,6 +56,7 @@ function App() {
         <Route path='/verify-account' element={<EmailVerify />} />
         <Route path='/email-verify' element={<EmailVerify />} />
         <Route path='/reset-password' element={<ResetPassword />} />
+        <Route path='/careermaps-Main'element={<CareermapMain/>}/>
         
         {/* Protected routes - require login + verified email */}
         <Route path='/home' element={
@@ -71,10 +74,10 @@ function App() {
             <UserProfile />
           // </ProtectedRoute>
         } />
-        <Route path='/solve/:problemId' element={
-          <ProtectedRoute>
-            <CodeEditorPage />
-          </ProtectedRoute>
+        <Route path='/learn' element={
+          // <ProtectedRoute>
+            <LearnMainPage />
+          // </ProtectedRoute>
         } />
       </Routes>
     </div>
