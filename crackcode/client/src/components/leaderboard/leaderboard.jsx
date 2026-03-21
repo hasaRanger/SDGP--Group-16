@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5050";
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5051";
 
 // ── Inject @keyframes spin — can't do this with inline styles ─
 if (typeof document !== "undefined") {
@@ -101,11 +101,7 @@ export default function Leaderboard() {
       if (data.success) setPlayers(data.leaderboard ?? []);
       else throw new Error(data.message || "Failed to load leaderboard");
     } catch (e) {
-      setError(
-        e.name === "AbortError"
-          ? "Request timed out — is the backend running on port 5050?"
-          : e.message
-      );
+      setError(e.name === "AbortError" ? "Request timed out — is the backend reachable?" : e.message);
     } finally {
       setLoading(false);
     }
@@ -121,11 +117,7 @@ export default function Leaderboard() {
         setPagination(data.pagination);
       } else throw new Error(data.message || "Failed to load leaderboard");
     } catch (e) {
-      setError(
-        e.name === "AbortError"
-          ? "Request timed out — is the backend running on port 5050?"
-          : e.message
-      );
+      setError(e.name === "AbortError" ? "Request timed out — is the backend reachable?" : e.message);
     } finally {
       setLoading(false);
     }

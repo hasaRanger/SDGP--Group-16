@@ -25,15 +25,34 @@ const purchaseSchema = new mongoose.Schema(
       required: true,
     },
 
-    tokensAfterPurchase: {
+    xpAfterPurchase: {
       type: Number,
-      default: 0,
+    },
+
+    stripeSessionId: {
+      type: String,
+      index: true,
+      unique: true,
+      sparse: true,
+    },
+
+    paymentMethod: {
+      type: String,
+      enum: ["xp", "stripe"],
+      default: "xp",
+    },
+
+    currency: {
+      type: String,
+      default: "xp",
     },
   },
   { timestamps: true }
 );
 
-// Index for "get user's purchases"
 purchaseSchema.index({ userId: 1, createdAt: -1 });
 
-export default mongoose.model("Purchase", purchaseSchema);
+const Purchase =
+  mongoose.models.Purchase || mongoose.model("Purchase", purchaseSchema);
+
+export default Purchase;

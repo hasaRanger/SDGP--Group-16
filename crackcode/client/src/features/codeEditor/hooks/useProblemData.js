@@ -2,14 +2,36 @@ import { useState, useEffect } from 'react';
 import { useEditor } from '../../../context/codeEditor/EditorContext';
 import { fetchProblemByLanguage, transformProblemData } from '../../../services/api/questionService';
 
-export const useProblemData = (problemId) => {
-  const { setCurrentProblem, setCode, setLoading, language, setLanguage } = useEditor();
+export const useProblemData = (problemId, preloadedQuestion = null, sourceArea = 'learn_page') => {
+  const { setCurrentProblem, setCode, setLoading, language, setLanguage, languageLocked, setLanguageLocked } = useEditor();
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const loadProblem = async () => {
       if (!problemId) {
         setLoading(false);
+        return;
+      }
+
+      // If the full question was passed via navigation state, use it directly
+      // (questions from learn collections may not exist in the main collection)
+      if (preloadedQuestion) {
+        try {
+          setLoading(true);
+          setError(null);
+          const transformed = transformProblemData(preloadedQuestion, language);
+          // Add sourceArea to transformed problem for reward system
+          transformed.sourceArea = sourceArea;
+          setCurrentProblem(transformed);
+          const variant = preloadedQuestion.variants?.find((v) => v.language === language)
+            || preloadedQuestion.variants?.[0];
+          if (variant?.starterCode) setCode(variant.starterCode);
+        } catch (err) {
+          setError(err.message || 'Failed to load case file');
+          setCurrentProblem(null);
+        } finally {
+          setLoading(false);
+        }
         return;
       }
 
@@ -22,6 +44,8 @@ export const useProblemData = (problemId) => {
 
         // Transform the data to match our UI format
         const transformedProblem = transformProblemData(rawProblem, language);
+        // Add sourceArea to transformed problem for reward system
+        transformedProblem.sourceArea = sourceArea;
 
         setCurrentProblem(transformedProblem);
 
@@ -39,7 +63,7 @@ export const useProblemData = (problemId) => {
     };
 
     loadProblem();
-  }, [problemId, language, setCurrentProblem, setCode, setLoading]);
+  }, [problemId, language, preloadedQuestion, sourceArea, setCurrentProblem, setCode, setLoading]);
 
-  return { error, setLanguage };
+  return { error, setLanguage, setLanguageLocked };
 };

@@ -1,45 +1,64 @@
-import sessionService from "./session.service.js";
+import {
+  invalidateSession,
+  invalidateAllUserSessions,
+  getUserSessions,
+  refreshAccessToken,
+} from "./session.service.js";
 import { getBalance } from "./transaction.service.js";
+
+// ─── Helper: validate sessionId format (should be 64 hex chars) ────
+const isValidSessionId = (id) => {
+  if (!id || typeof id !== 'string') return false;
+  return /^[a-f0-9]{64}$/.test(id);
+};
 
 // ─── Cookie config ───────────────────────────────────────────
 const isProduction = () => process.env.NODE_ENV === "production";
 
-export const accessCookieOptions = () => ({
+// Determine whether cookies should be marked secure based on the incoming request
+const requestIsSecure = (req) => {
+  // Prefer explicit request information. If not available, allow override via env var.
+  if (!req) return process.env.FORCE_SECURE_COOKIES === 'true';
+  const proto = (req.headers && (req.headers["x-forwarded-proto"] || req.headers["X-Forwarded-Proto"])) || '';
+  return Boolean(req.secure) || proto.toLowerCase().includes('https') || process.env.FORCE_SECURE_COOKIES === 'true';
+};
+
+export const accessCookieOptions = (req) => ({
   httpOnly: true,
-  secure: isProduction(),
-  sameSite: isProduction() ? "strict" : "lax",
-  maxAge: 15 * 60 * 1000, // 15 minutes
+  secure: requestIsSecure(req),
+  // If cookie is secure (i.e. used cross-site over https) set sameSite to 'none'
+  sameSite: requestIsSecure(req) ? 'none' : 'lax',
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 });
 
-export const refreshCookieOptions = () => ({
+export const refreshCookieOptions = (req) => ({
   httpOnly: true,
-  secure: isProduction(),
-  sameSite: isProduction() ? "strict" : "lax",
+  secure: requestIsSecure(req),
+  sameSite: requestIsSecure(req) ? 'none' : 'lax',
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   path: "/api/session/refresh", // only sent to the refresh endpoint
 });
 
-// ─── Helper: set both cookies on the response ────────────────
-export const setSessionCookies = (res, accessToken, refreshToken) => {
-  res.cookie("accessToken", accessToken, accessCookieOptions());
-  res.cookie("refreshToken", refreshToken, refreshCookieOptions());
+//  Helper: set both cookies on the response 
+export const setSessionCookies = (req, res, accessToken, refreshToken) => {
+  res.cookie("accessToken", accessToken, accessCookieOptions(req));
+  res.cookie("refreshToken", refreshToken, refreshCookieOptions(req));
 };
 
-// ─── Helper: clear all auth cookies ──────────────────────────
+//  Helper: clear all auth cookies 
 export const clearSessionCookies = (res) => {
   res.clearCookie("accessToken");
   res.clearCookie("refreshToken", { path: "/api/session/refresh" });
   res.clearCookie("token"); // legacy
 };
 
-// ─────────────────────────────────────────────────────────────
+
 //There is NO "createSession" endpoint here.
 // Sessions are created INSIDE the auth controller (login/register).
-// ─────────────────────────────────────────────────────────────
 
-/**
- * POST /api/session/refresh
- * No auth required — uses the refresh-token cookie.
+/*
+ POST /api/session/refresh
+ No auth required — uses the refresh-token cookie.
  */
 export const refreshToken = async (req, res) => {
   try {
@@ -54,7 +73,7 @@ export const refreshToken = async (req, res) => {
       });
     }
 
-    const result = await sessionService.refreshAccessToken(token);
+    const result = await refreshAccessToken(token);
 
     if (!result.success) {
       clearSessionCookies(res);
@@ -66,7 +85,7 @@ export const refreshToken = async (req, res) => {
     }
 
     // Set rotated tokens
-    setSessionCookies(res, result.accessToken, result.refreshToken);
+    setSessionCookies(req, res, result.accessToken, result.refreshToken);
 
     return res.json({ success: true, message: "Token refreshed" });
   } catch (error) {
@@ -78,14 +97,23 @@ export const refreshToken = async (req, res) => {
   }
 };
 
-/**
- * POST /api/session/logout
- * Invalidates the current session.
+/*
+ POST /api/session/logout
+ Invalidates the current session.
  */
 export const logout = async (req, res) => {
   try {
+    // Validate sessionId format for security
+    if (req.sessionId && !isValidSessionId(req.sessionId)) {
+      console.warn('[Session] Invalid sessionId format detected in logout:', req.sessionId.substring(0, 20));
+      return res.status(400).json({
+        success: false,
+        message: "Invalid session format",
+      });
+    }
+
     if (req.sessionId) {
-      await sessionService.invalidateSession(req.sessionId);
+      await invalidateSession(req.sessionId);
     }
 
     clearSessionCookies(res);
@@ -100,13 +128,13 @@ export const logout = async (req, res) => {
   }
 };
 
-/**
- * POST /api/session/logout-all
- * Invalidates ALL sessions for the current user (all devices).
+/*
+ POST /api/session/logout-all
+ Invalidates ALL sessions for the current user (all devices).
  */
 export const logoutAll = async (req, res) => {
   try {
-    const count = await sessionService.invalidateAllUserSessions(req.userId);
+    const count = await invalidateAllUserSessions(req.userId);
 
     clearSessionCookies(res);
 
@@ -123,13 +151,13 @@ export const logoutAll = async (req, res) => {
   }
 };
 
-/**
- * GET /api/session/list
- * Returns all active sessions for the current user with "isCurrent" flag.
+/*
+  GET /api/session/list
+ Returns all active sessions for the current user with "isCurrent" flag.
  */
 export const getSessions = async (req, res) => {
   try {
-    const sessions = await sessionService.getUserSessions(req.userId);
+    const sessions = await getUserSessions(req.userId);
 
     const mapped = sessions.map((s) => ({
       id: s.sessionId,
@@ -149,13 +177,21 @@ export const getSessions = async (req, res) => {
   }
 };
 
-/**
- * DELETE /api/session/revoke/:sessionId
- * Revoke a specific session (cannot revoke your own — use logout).
+/*
+  DELETE /api/session/revoke/:sessionId
+  Revoke a specific session (cannot revoke your own — use logout).
  */
 export const revokeSession = async (req, res) => {
   try {
     const { sessionId } = req.params;
+
+    // Validate sessionId format
+    if (!isValidSessionId(sessionId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid session ID format",
+      });
+    }
 
     if (sessionId === req.sessionId) {
       return res.status(400).json({
@@ -165,7 +201,7 @@ export const revokeSession = async (req, res) => {
     }
 
     // Make sure the target session belongs to this user
-    const sessions = await sessionService.getUserSessions(req.userId);
+    const sessions = await getUserSessions(req.userId);
     const target = sessions.find((s) => s.sessionId === sessionId);
 
     if (!target) {
@@ -175,7 +211,7 @@ export const revokeSession = async (req, res) => {
       });
     }
 
-    await sessionService.invalidateSession(sessionId);
+    await invalidateSession(sessionId);
 
     return res.json({ success: true, message: "Session revoked" });
   } catch (error) {
@@ -187,10 +223,10 @@ export const revokeSession = async (req, res) => {
   }
 };
 
-/**
- * GET /api/session/state
- * Returns the authenticated user's current balance (XP, tokens, rank).
- * This is the endpoint the React SessionContext calls on mount.
+/*
+ GET /api/session/state
+  Returns the authenticated user's current balance (XP, tokens, rank).
+ This is the endpoint the React SessionContext calls on mount.
  */
 export const getSessionState = async (req, res) => {
   try {

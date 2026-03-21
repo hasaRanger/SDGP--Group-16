@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { EditorProvider } from "../../context/codeEditor/EditorContext";
 import { useProblemData } from "../../features/codeEditor/hooks/useProblemData";
+import BackBtn from "../../components/common/BackBtn";
 import CaseDetails from "../../components/codeEditor/CaseDetails";
 import EditorWrapper from "../../components/codeEditor/EditorWrapper";
 
@@ -9,37 +10,52 @@ const CodeEditorContent = () => {
   const { problemId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { error, setLanguage } = useProblemData(problemId);
+  const preloadedQuestion = location.state?.question || null;
+  const sourceArea = location.state?.sourceArea || 'learn_page'; // NEW: Get sourceArea from navigation
+  const { error, setLanguage, setLanguageLocked } = useProblemData(problemId, preloadedQuestion, sourceArea);
 
-  // Set language from navigation state if provided (from ChapterSelection)
   useEffect(() => {
     if (location.state?.language) {
       setLanguage(location.state.language);
+      setLanguageLocked(true);  // Lock the language when pre-selected
     }
-  }, [location.state, setLanguage]);
+  }, [location.state, setLanguage, setLanguageLocked]);
 
   if (error) return (
     <div className="h-screen flex items-center justify-center bg-[#0a0a0a]">
       <div className="text-center">
-        <div className="text-red-500 p-10 font-mono text-lg mb-4">ERROR: {error}</div>
-        <button 
+        <div className="text-6xl mb-4">🔍</div>
+        <div className="text-red-400 p-6 font-mono text-lg mb-4 bg-red-900/10 border border-red-500/30 rounded-lg">
+          CASE NOT FOUND: {error}
+        </div>
+        <button
           onClick={() => navigate('/learn')}
-          className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-2 rounded font-bold"
+          className="bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-2 rounded-lg font-bold transition-colors"
         >
-          Back to Learn
+          ← Back to Cases
         </button>
       </div>
     </div>
   );
 
   return (
-    <div className="h-screen flex bg-[#0a0a0a] overflow-hidden gap-1">
-      {/* FIXED: Added gap between panels */}
-      <div className="w-[45%] overflow-y-auto">
-        <CaseDetails />
+    <div className="h-screen flex flex-col bg-[#0d0d0d] overflow-hidden">
+      {/* Header with Back Button */}
+      <div className="flex-shrink-0 bg-[#0d0d0d] border-b border-gray-800/60 px-5 py-3">
+        <BackBtn />
       </div>
-      <div className="w-[55%] flex flex-col">
-        <EditorWrapper />
+
+      {/* Main Content */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        {/* LEFT: Problem Description */}
+        <div className="w-[42%] flex-shrink-0 overflow-y-auto border-r border-gray-800/60">
+          <CaseDetails />
+        </div>
+
+        {/* RIGHT: Editor + Analysis Panel */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <EditorWrapper />
+        </div>
       </div>
     </div>
   );
