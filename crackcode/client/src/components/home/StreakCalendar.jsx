@@ -5,7 +5,7 @@ import axios from 'axios';
 import { AppContent } from '../../context/userauth/authenticationContext';
 
 export default function StreakCalendar() {
-  const { theme } = useTheme();
+  useTheme();
   const [hoveredDate, setHoveredDate] = useState(null);
 
   // Activity data (fetched from server, cached to localStorage and refreshed every 24 hours)
@@ -45,6 +45,7 @@ export default function StreakCalendar() {
           localStorage.setItem(LOCAL_KEY, JSON.stringify(data.data.activity || {}));
           localStorage.setItem(LOCAL_AT, String(Date.now()));
         }
+      // eslint-disable-next-line no-unused-vars
       } catch (err) {
         // if fetch fails, fall back to any cached data or leave empty
         const cached = localStorage.getItem(LOCAL_KEY);
@@ -87,6 +88,7 @@ export default function StreakCalendar() {
           localStorage.setItem(LOCAL_KEY, JSON.stringify(data.data.activity || {}));
           localStorage.setItem(LOCAL_AT, String(Date.now()));
         }
+      // eslint-disable-next-line no-unused-vars
       } catch (err) {
         // ignore 
       }
@@ -102,6 +104,7 @@ export default function StreakCalendar() {
     const minYear = Math.max(2018, current - 6);
     const arr = [];
     for (let y = current; y >= minYear; y--) arr.push(y);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setYearsList(arr);
     // ensure selectedYear is valid
     setSelectedYear((s) => (s ? s : current));
@@ -115,6 +118,7 @@ export default function StreakCalendar() {
       try {
         const { data } = await axios.get(`${backendUrl}/api/user/progress-summary`, { withCredentials: true, timeout: 6000 });
         if (data && data.success && mounted) setProgressSummary(data.data);
+      // eslint-disable-next-line no-unused-vars
       } catch (err) {
         // ignore
       }
@@ -129,7 +133,6 @@ export default function StreakCalendar() {
     const year = selectedYear;
 
     for (let month = 0; month < 12; month++) {
-      const first = new Date(year, month, 1);
       const last = new Date(year, month + 1, 0);
       const daysInMonth = last.getDate();
 
@@ -155,7 +158,7 @@ export default function StreakCalendar() {
     return result;
   }, [activityData, selectedYear]);
 
-  const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  
   
   // Derive stats: prefer server-provided summary for current streak; compute longest streak from activity data
   const stats = useMemo(() => {
@@ -445,7 +448,7 @@ export default function StreakCalendar() {
           }}
         >
           <p className='text-base font-bold mb-1'>
-            <Flame className="inline-block mr-2" color='var(--brand)' /> Keep up the amazing work!
+            <Flame className="inline-block mr-2" style={{ color: 'var(--brand)' }} /> Keep up the amazing work!
           </p>
           <p style={{ color: 'var(--textSec)' }} className='text-sm'>
             You're on a {stats.currentStreak}-day streak! Maintain consistency to unlock elite badges.

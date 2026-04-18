@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { useTheme } from '../../context/theme/ThemeContext'
-import { Mail, Link, Copy, CheckCircle2 } from 'lucide-react';
+import { Mail, Link, Link2, Copy, CheckCircle2 } from 'lucide-react';
 import Button from '../ui/Button';
 
 function InviteCard() {
+  // eslint-disable-next-line no-unused-vars
   const { theme } = useTheme()
   const [copied, setCopied] = useState(false);
-  const inviteLink = 'https://codedetectives.com/invite/abc123xyz';
-  const friendsInvited = 3;
-  const bonusPoints = 450;
+  const inviteLink = 'https://app.crackcodehq.com';
 
   const handleCopy = () => {
     navigator.clipboard.writeText(inviteLink);
@@ -26,13 +25,21 @@ function InviteCard() {
         borderWidth: '1px'
       }}
     >
-      <div className='grid grid-cols-1 md:grid-cols-3 gap-6 items-center'>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-6 items-center'>
         {/* Left: Info */}
-        <div className='md:col-span-1'>
-          <h3 className="text-lg font-bold mb-1">🎉 Invite Friends</h3>
-          <p style={{ color: 'var(--textSec)' }} className="text-xs">
-            Earn bonus points together
-          </p>
+        <div className='flex flex-row md:col-span-1 gap-6'>
+          <div>
+            <h3 className="flex items-center justify-baseline gap-2 text-lg font-bold mb-1">
+              <span><Link2 /></span>
+              Invite Friends
+            </h3>
+          </div>
+          <div>
+            <p style={{ color: 'var(--textSec)' }} className="text-xs">
+              Know someone who’d enjoy learning to code through challenges and stories? <br />
+              Send them this link and let them jump in!
+            </p>
+          </div>
         </div>
 
         {/* Center: Copy Link */}
@@ -45,7 +52,7 @@ function InviteCard() {
               className="flex-1 rounded-lg px-3 py-2 text-xs focus:outline-none transition-all duration-300"
               style={{
                 background: 'rgba(255, 165, 0, 0.05)',
-                color: 'var(--text)',
+                color: 'var(--muted)',
                 border: '1px solid var(--border)'
               }}
             />
@@ -72,7 +79,7 @@ function InviteCard() {
         </div>
 
         {/* Right: Stats */}
-        <div className='md:col-span-1 flex gap-4'>
+        {/* <div className='md:col-span-1 flex gap-4'>
           <div className='flex-1'>
             <p className="text-xs font-semibold mb-1" style={{ color: 'var(--textSec)' }}>
               Invited
@@ -89,7 +96,7 @@ function InviteCard() {
               +{bonusPoints}
             </p>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
